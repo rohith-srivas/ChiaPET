@@ -1,0 +1,111 @@
+name: ATAC_Process
+description: Processes ATAC seq data.
+resources:
+  minimumRamGb: 9
+  minimumCpuCores: 8
+  disks:
+    - name: datadisk
+      type: PERSISTENT_HDD
+      sizeGb: 750
+      mountPoint: /mnt/data
+  zones:
+    - us-central1-a
+    - us-central1-b
+    - us-central1-c
+    - us-central1-f
+inputParameters:
+- name: INPUT_PE1
+  localCopy:
+    disk: datadisk
+    path: input_pe1.fastq.gz
+- name: INPUT_PE2
+  localCopy:
+    disk: datadisk
+    path: input_pe2.fastq.gz
+- name: PICARD_JAR
+  localCopy:
+    disk: datadisk
+    path: picard.jar
+- name: FILTER_FILE
+  localCopy:
+    disk: datadisk
+    path: filterFile.txt
+- name: BOWTIE_REF_FILE_1
+  description: First bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.1.ebwt
+- name: BOWTIE_REF_FILE_2
+  description: Second bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.2.ebwt
+- name: BOWTIE_REF_FILE_3
+  description: Third bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.3.ebwt
+- name: BOWTIE_REF_FILE_4
+  description: Fourth bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.4.ebwt
+- name: BOWTIE_REF_FILE_5
+  description: Fifth bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.rev.1.ebwt
+- name: BOWTIE_REF_FILE_6
+  description: Sixth bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.rev.2.ebwt
+- name: BOWTIE_REF_PREFIX
+  description: Bowtie reference prefix
+  defaultValue: /mnt/data/hg19
+- name: PE1_ADAPTOR
+  description: PE1 Adaptor sequence to find and trim
+- name: PE2_ADAPTOR
+  description: PE2 Adaptor sequence to find and trim
+- name: ALIGN_PE1
+  description: Unzipped Trimmed PE1 FASTQ
+  defaultValue: /mnt/data/pe1_trimmed.fastq
+- name: ALIGN_PE2
+  description: Unzipped Trimmed PE2 FASTQ
+  defaultValue: /mnt/data/pe2_trimmed.fastq
+- name: SORTED_BAM
+  description: Temporary sorted BAM file
+  defaultValue: /mnt/data/aln_sorted.bam
+- name: SORTED_DEDUP_BAM
+  description: Temporary sorted and dedup'd BAM file
+  defaultValue: /mnt/data/aln_sorted_dedup.bam
+- name: PICARD_METRICS_FILE
+  description: Temporary Picard MarkDups metrics file
+  defaultValue: /mnt/data/metrics_picard.txt
+- name: TEMP_DIR
+  description: Temporary directory
+  defaultValue: /mnt/data/
+outputParameters:
+- name: TRIMMED_PE1
+  localCopy:
+    disk: datadisk
+    path: pe1_trimmed.fastq.gz
+- name: TRIMMED_PE2
+  localCopy:
+    disk: datadisk
+    path: pe2_trimmed.fastq.gz
+- name: RAW_BAM
+  localCopy:
+    disk: datadisk
+    path: raw_aln.bam
+- name: FINAL_BAM
+  localCopy:
+    disk: datadisk
+    path: final_sorted_dedup_noChrM.bam
+- name: METRICS_FILE
+  localCopy:
+    disk: datadisk
+    path: totReads.txt
+docker:
+  imageName: rsrivas/atac
+  cmd: "cutadapt -a ${PE1_ADAPTOR} -A ${PE2_ADAPTOR} -O 5 -m 30 -q 15 -o ${TRIMMED_PE1} -p ${TRIMMED_PE2} ${INPUT_PE1} ${INPUT_PE2}; gunzip ${TRIMMED_PE1}; gunzip ${TRIMMED_PE2}; bowtie -q --phred33-quals -X 2000 -m 1 --fr -p 8 -S --chunkmbs 400 ${BOWTIE_REF_PREFIX} -1 ${ALIGN_PE1} -2 ${ALIGN_PE2} | samtools view -Sb - > ${RAW_BAM}; java -jar -Xmx8g ${PICARD_JAR} SortSam I=${RAW_BAM} O=${SORTED_BAM} SORT_ORDER=coordinate TMP_DIR=${TEMP_DIR}; java -jar -Xmx8g ${PICARD_JAR} MarkDuplicates INPUT=${SORTED_BAM} OUTPUT=${SORTED_DEDUP_BAM} METRICS_FILE=${PICARD_METRICS_FILE} ASSUME_SORTED=true REMOVE_DUPLICATES=true TMP_DIR=${TEMP_DIR}; samtools view -b -f 1 -F 12 -L ${FILTER_FILE} ${SORTED_DEDUP_BAM} > ${FINAL_BAM}; samtools view -c ${FINAL_BAM} > ${METRICS_FILE}"

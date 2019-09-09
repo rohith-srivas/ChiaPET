@@ -1,0 +1,75 @@
+name: AlignPETs
+description: Aligns each end of PET separately using bowtie2
+resources:
+  minimumRamGb: 8
+  minimumCpuCores: 6
+  disks:
+    - name: datadisk
+      type: PERSISTENT_HDD
+      sizeGb: 750
+      mountPoint: /mnt/data
+  zones:
+    - us-central1-a
+    - us-central1-b
+    - us-central1-c
+    - us-central1-f
+inputParameters:
+- name: INPUT_FQ_PE1
+  localCopy:
+    disk: datadisk
+    path: input_pe1.fastq.gz
+- name: INPUT_FQ_PE2
+  localCopy:
+    disk: datadisk
+    path: input_pe2.fastq.gz
+- name: BOWTIE_REF_FILE_1
+  description: First bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.1.ebwt
+- name: BOWTIE_REF_FILE_2
+  description: Second bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.2.ebwt
+- name: BOWTIE_REF_FILE_3
+  description: Third bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.3.ebwt
+- name: BOWTIE_REF_FILE_4
+  description: Fourth bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.4.ebwt
+- name: BOWTIE_REF_FILE_5
+  description: Fifth bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.rev.1.ebwt
+- name: BOWTIE_REF_FILE_6
+  description: Sixth bowtie file
+  localCopy:
+    disk: datadisk
+    path: hg19.rev.2.ebwt
+- name: BOWTIE_REF_PREFIX
+  description: Bowtie reference prefix
+  defaultValue: /mnt/data/hg19
+- name: INPUT_FQ_PE1_UNZIPPED
+  description: Unzipped FASTQ paired-end file 1 for use in bowtie
+  defaultValue: /mnt/data/input_pe1.fastq
+- name: INPUT_FQ_PE2_UNZIPPED
+  description: Unzipped FASTQ paried-end file 2 for use in bowtie
+  defaultValue: /mnt/data/input_pe2.fastq
+outputParameters:
+- name: OUTPUT_BAM_PE1
+  localCopy:
+    disk: datadisk
+    path: sample_PE1.bam
+- name: OUTPUT_BAM_PE2
+  localCopy:
+    disk: datadisk
+    path: sample_PE2.bam
+docker:
+  imageName: rsrivas/mango
+  cmd: "gunzip ${INPUT_FQ_PE1}; gunzip ${INPUT_FQ_PE2}; bowtie ${BOWTIE_REF_PREFIX} ${INPUT_FQ_PE1_UNZIPPED} --phred33-quals -S -n 2 -l 50 -k 1 --chunkmbs 500 -S --mapq 40 --best -m 1 -p 6 | samtools view -Sb - > ${OUTPUT_BAM_PE1}; bowtie ${BOWTIE_REF_PREFIX} ${INPUT_FQ_PE2_UNZIPPED} --phred33-quals -S -n 2 -l 50 -k 1 --chunkmbs 500 -S --mapq 40 --best -m 1 -p 6 | samtools view -Sb - > ${OUTPUT_BAM_PE2}"

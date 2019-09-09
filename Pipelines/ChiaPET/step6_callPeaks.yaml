@@ -1,0 +1,39 @@
+name: ProduceTAGAlignFile
+description: Produces TagAlign file from BEDPE file and calls Peaks using MACS2
+resources:
+  minimumRamGb: 30
+  minimumCpuCores: 1
+  disks:
+    - name: datadisk
+      type: PERSISTENT_HDD
+      sizeGb: 300
+      mountPoint: /mnt/data
+  zones:
+    - us-central1-a
+    - us-central1-b
+    - us-central1-c
+    - us-central1-f
+inputParameters:
+- name: INPUT_BEDPE
+  localCopy:
+    disk: datadisk
+    path: input.bedpe
+- name: JAR_FILE
+  localCopy:
+    disk: datadisk
+    path: analysis.jar
+- name: PREFIX
+  description: Prefix used for MACS2 output
+  defaultValue: /mnt/data/samplePeak
+outputParameters:
+- name: OUTPUT_TAGALIGN
+  localCopy:
+    disk: datadisk
+    path: output.tagAlign
+- name: OUTPUT_PEAKS
+  localCopy:
+    disk: datadisk
+    path: samplePeak_peaks.narrowPeak
+docker:
+  imageName: rsrivas/java_and_macs2
+  cmd: "java -jar -Xmx14g ${JAR_FILE} ${INPUT_BEDPE} ${OUTPUT_TAGALIGN}; macs2 callpeak -t ${OUTPUT_TAGALIGN} -g hs -f BED -n ${PREFIX} -q 0.01"

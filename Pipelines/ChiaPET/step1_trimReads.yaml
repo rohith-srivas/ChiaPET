@@ -1,0 +1,36 @@
+name: TrimReads
+description: Runs cutadapt to trim the universal nextera primers
+resources:
+  minimumRamGb: 6
+  minimumCpuCores: 1
+  disks:
+    - name: datadisk
+      type: PERSISTENT_HDD
+      sizeGb: 200
+      mountPoint: /mnt/data
+  zones:
+    - us-central1-a
+    - us-central1-b
+    - us-central1-c
+    - us-central1-f
+inputParameters:
+- name: INPUT_FQ1
+  localCopy:
+    disk: datadisk
+    path: input_pe1.fastq.gz
+- name: INPUT_FQ2
+  localCopy:
+    disk: datadisk
+    path: input_pe2.fastq.gz
+outputParameters:
+- name: OUTPUT_FQ1
+  localCopy:
+    disk: datadisk
+    path: output_pe1.fastq.gz
+- name: OUTPUT_FQ2
+  localCopy:
+    disk: datadisk
+    path: output_pe2.fastq.gz
+docker:
+  imageName: rsrivas/cutadapt
+  cmd: "cutadapt -q 15 -O 4 -m 20 -b CTGTCTCTTATA -b TATAAGAGACAG  -B CTGTCTCTTATA -B TATAAGAGACAG -o ${OUTPUT_FQ1} -p ${OUTPUT_FQ2} ${INPUT_FQ1} ${INPUT_FQ2}"

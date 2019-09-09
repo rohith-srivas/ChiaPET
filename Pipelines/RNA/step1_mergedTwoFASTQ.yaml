@@ -1,0 +1,44 @@
+name: MergeFASTQ_Two
+description: Merges two FASTQ files into one
+resources:
+  minimumRamGb: 4
+  minimumCpuCores: 1
+  disks:
+    - name: datadisk
+      type: PERSISTENT_HDD
+      sizeGb: 200
+      mountPoint: /mnt/data
+  zones:
+    - us-central1-a
+    - us-central1-b
+    - us-central1-c
+    - us-central1-f
+inputParameters:
+- name: INPUT_FQ1_PE1
+  localCopy:
+    disk: datadisk
+    path: input_fq1_pe1.fastq.gz
+- name: INPUT_FQ1_PE1
+  localCopy:
+    disk: datadisk
+    path: input_fq1_pe2.fastq.gz
+- name: INPUT_FQ2_PE1
+  localCopy:
+    disk: datadisk
+    path: input_fq2_pe1.fastq.gz
+- name: INPUT_FQ2_PE1
+  localCopy:
+    disk: datadisk
+    path: input_fq2_pe2.fastq.gz
+outputParameters:
+- name: OUTPUT_PE1
+  localCopy:
+    disk: datadisk
+    path: output_pe1.fastq.gz
+- name: OUTPUT_PE2
+  localCopy:
+    disk: datadisk
+    path: output_pe2.fastq.gz
+docker:
+  imageName: rsrivas/java8
+  cmd: "cat ${INPUT_FQ1_PE1} ${INPUT_FQ2_PE1} > ${OUTPUT_PE1}; cat ${INPUT_FQ1_PE2} ${INPUT_FQ2_PE2} > ${OUTPUT_PE2}"

@@ -1,0 +1,45 @@
+name: RemoveDupPETs
+description: Purged BEDPE files of duplicate PETs.
+resources:
+  minimumRamGb: 20
+  minimumCpuCores: 1
+  disks:
+    - name: datadisk
+      type: PERSISTENT_HDD
+      sizeGb: 750
+      mountPoint: /mnt/data
+  zones:
+    - us-central1-a
+    - us-central1-b
+    - us-central1-c
+    - us-central1-f
+inputParameters:
+- name: INPUT_RAW_BEDPE
+  localCopy:
+    disk: datadisk
+    path: input_raw.bedpe
+- name: JAR_RMDUPBEDPE
+  localCopy:
+    disk: datadisk
+    path: analysis.jar
+- name: SORTED_BEDPE
+  description: Coordinate sorted BEDPE file
+  defaultValue: /mnt/data/input_sorted.bedpe
+- name: TEMP_DIR
+  description: Temporary Directory for use with sort
+  defaultValue: /mnt/data/
+- name: OUTPUT_PREFIX
+  description: Name sorted BAM_PE1
+  defaultValue: /mnt/data/output
+outputParameters:
+- name: OUTPUT_BEDPE
+  localCopy:
+    disk: datadisk
+    path: output.rmdup.bedpe
+- name: METRICS_FILE
+  localCopy:
+    disk: datadisk
+    path: metrics.txt
+docker:
+  imageName: rsrivas/mango
+  cmd: "sort -k 1,1 -k2,2n --temporary-directory=${TEMP_DIR} ${INPUT_RAW_BEDPE} > ${SORTED_BEDPE}; java -jar -Xmx8g ${JAR_RMDUPBEDPE} ${SORTED_BEDPE} ${OUTPUT_PREFIX} 10000000 ${METRICS_FILE}"

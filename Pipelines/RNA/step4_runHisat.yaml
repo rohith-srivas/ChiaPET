@@ -1,0 +1,70 @@
+name: RunHisat
+description: Runs HiSat to produce aligned BAM file for visualization purposes.
+resources:
+  minimumRamGb: 8
+  minimumCpuCores: 6
+  disks:
+    - name: datadisk
+      type: PERSISTENT_HDD
+      sizeGb: 200
+      mountPoint: /mnt/data
+  zones:
+    - us-central1-a
+    - us-central1-b
+    - us-central1-c
+    - us-central1-f
+inputParameters:
+- name: INPUT_PE1_GZIP
+  localCopy:
+    disk: datadisk
+    path: input_pe1.fastq.gz
+- name: INPUT_PE2_GZIP
+  localCopy:
+    disk: datadisk
+    path: input_pe2.fastq.gz
+- name: HISAT_INDEX_FILE1
+  localCopy:
+    disk: datadisk
+    path: genome_snp_tran.1.ht2
+- name: HISAT_INDEX_FILE2
+  localCopy:
+    disk: datadisk
+    path: genome_snp_tran.2.ht2
+- name: HISAT_INDEX_FILE3
+  localCopy:
+    disk: datadisk
+    path: genome_snp_tran.3.ht2
+- name: HISAT_INDEX_FILE4
+  localCopy:
+    disk: datadisk
+    path: genome_snp_tran.4.ht2
+- name: HISAT_INDEX_FILE5
+  localCopy:
+    disk: datadisk
+    path: genome_snp_tran.5.ht2
+- name: HISAT_INDEX_FILE6
+  localCopy:
+    disk: datadisk
+    path: genome_snp_tran.6.ht2
+- name: HISAT_INDEX_FILE7
+  localCopy:
+    disk: datadisk
+    path: genome_snp_tran.7.ht2
+- name: HISAT_INDEX_FILE8
+  localCopy:
+    disk: datadisk
+    path: genome_snp_tran.8.ht2
+- name: HISAT_HG19_INDEX
+  defaultValue: /mnt/data/genome_snp_tran
+- name: INPUT_PE1
+  defaultValue: /mnt/data/input_pe1.fastq
+- name: INPUT_PE2
+  defaultValue: /mnt/data/input_pe2.fastq
+outputParameters:
+- name: OUTPUT_BAM
+  localCopy:
+    disk: datadisk
+    path: output.bam
+docker:
+  imageName: rsrivas/rna
+  cmd: "gunzip ${INPUT_PE1_GZIP}; gunzip ${INPUT_PE2_GZIP}; hisat2 -q --phred33 --rna-strandness RF -p 6 -x ${HISAT_HG19_INDEX} -1 ${INPUT_PE1} -2 ${INPUT_PE2} -S | samtools view -Sb - > ${OUTPUT_BAM}"
