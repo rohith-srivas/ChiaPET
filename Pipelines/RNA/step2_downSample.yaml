@@ -1,0 +1,46 @@
+name: DownSample_FASTQ
+description: Downsamples a given paired-end FASTQ file to an appropriately requested level
+resources:
+  minimumRamGb: 4
+  minimumCpuCores: 1
+  disks:
+    - name: datadisk
+      type: PERSISTENT_HDD
+      sizeGb: 200
+      mountPoint: /mnt/data
+  zones:
+    - us-central1-a
+    - us-central1-b
+    - us-central1-c
+    - us-central1-f
+inputParameters:
+- name: INPUT_PE1_GZIP
+  localCopy:
+    disk: datadisk
+    path: input_pe1.fastq.gz
+- name: INPUT_PE2_GZIP
+  localCopy:
+    disk: datadisk
+    path: input_pe2.fastq.gz
+- name: INPUT_PE1
+  defaultValue: /mnt/data/input_pe1.fastq
+- name: INPUT_PE2
+  defaultValue: /mnt/data/input_pe2.fastq
+- name: OUTPUT_PREFIX
+  defaultValue: /mnt/data/output
+- name: OUTPUT_PE1
+  defaultValue: /mnt/data/output.1.fastq
+- name: OUTPUT_PE2
+  defaultValue: /mnt/data/output.2.fastq
+outputParameters:
+- name: OUTPUT_PE1_GZIP
+  localCopy:
+    disk: datadisk
+    path: output.1.fastq.gz
+- name: OUTPUT_PE2_GZIP
+  localCopy:
+    disk: datadisk
+    path: output.2.fastq.gz
+docker:
+  imageName: rsrivas/rna
+  cmd: "gunzip ${INPUT_PE1_GZIP}; gunzip ${INPUT_PE2_GZIP}; fastq-sample -n 60000000 -o ${OUTPUT_PREFIX} -s 42 ${INPUT_PE1} ${INPUT_PE2}; gzip ${OUTPUT_PE1}; gzip ${OUTPUT_PE2}"

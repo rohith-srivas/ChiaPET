@@ -1,0 +1,50 @@
+name: RunKallisto
+description: Runs Kallisto to produce transcript quantification and pseudoBAM file
+resources:
+  minimumRamGb: 8
+  minimumCpuCores: 1
+  disks:
+    - name: datadisk
+      type: PERSISTENT_HDD
+      sizeGb: 200
+      mountPoint: /mnt/data
+  zones:
+    - us-central1-a
+    - us-central1-b
+    - us-central1-c
+    - us-central1-f
+inputParameters:
+- name: INPUT_PE1_GZIP
+  localCopy:
+    disk: datadisk
+    path: input_pe1.fastq.gz
+- name: INPUT_PE2_GZIP
+  localCopy:
+    disk: datadisk
+    path: input_pe2.fastq.gz
+- name: KALLISTO_INDEX
+  localCopy:
+    disk: datadisk
+    path: transcript.idx
+- name: OUTPUT_PREFIX
+  defaultValue: /mnt/data/out
+outputParameters:
+- name: OUTPUT_BAM
+  localCopy:
+    disk: datadisk
+    path: output.bam
+- name: OUTPUT_ABUNDANCE_H5
+  localCopy:
+    disk: datadisk
+    path: out/abundance.h5
+- name: OUTPUT_ABUNDANCE_TSV
+  localCopy:
+    disk: datadisk
+    path: out/abundance.tsv
+- name: OUTPUT_RUN_INFO
+  localCopy:
+    disk: datadisk
+    path: out/run_info.json
+docker:
+  imageName: rsrivas/rna
+  cmd: "kallisto quant -i ${KALLISTO_INDEX} -o ${OUTPUT_PREFIX} --bias -b 100  --pseudobam ${INPUT_PE1_GZIP} ${INPUT_PE2_GZIP} | samtools view -Sb - > ${OUTPUT_BAM}"

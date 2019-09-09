@@ -1,0 +1,58 @@
+name: ProducePETs
+description: Creates Raw PET files as per Mango
+resources:
+  minimumRamGb: 10
+  minimumCpuCores: 1
+  disks:
+    - name: datadisk
+      type: PERSISTENT_HDD
+      sizeGb: 750
+      mountPoint: /mnt/data
+  zones:
+    - us-central1-a
+    - us-central1-b
+    - us-central1-c
+    - us-central1-f
+inputParameters:
+- name: BAM_PE1
+  localCopy:
+    disk: datadisk
+    path: input_pe1.bam
+- name: BAM_PE2
+  localCopy:
+    disk: datadisk
+    path: input_pe2.bam
+- name: JAR_MAKEBEDPE
+  localCopy:
+    disk: datadisk
+    path: analysis.jar
+- name: PREFIX_BAM_PE1_SORTED
+  description: Name sorted BAM_PE1
+  defaultValue: /mnt/data/pe1_nameSorted
+- name: PREFIX_BAM_PE2_SORTED
+  description: Name sorted BAM PE2
+  defaultValue: /mnt/data/pe2_nameSorted
+- name: BAM_PE1_SORTED
+  description: Name sorted BAM_PE1
+  defaultValue: /mnt/data/pe1_nameSorted.bam
+- name: BAM_PE2_SORTED
+  description: Name sorted BAM PE2
+  defaultValue: /mnt/data/pe2_nameSorted.bam
+- name: SAM_PE1
+  description: Temporary paired-end 1 SAM file 
+  defaultValue: /mnt/data/sam_pe1.sam
+- name: SAM_PE2
+  description: Temporary paired-end 2 SAM file
+  defaultValue: /mnt/data/sam_pe2.sam
+outputParameters:
+- name: OUTPUT_BEDPE
+  localCopy:
+    disk: datadisk
+    path: output.bedpe
+- name: METRICS_FILE
+  localCopy:
+    disk: datadisk
+    path: metrics.txt
+docker:
+  imageName: rsrivas/mango
+  cmd: "samtools sort -n ${BAM_PE1} ${PREFIX_BAM_PE1_SORTED}; samtools sort -n ${BAM_PE2} ${PREFIX_BAM_PE2_SORTED}; samtools view ${BAM_PE1_SORTED} > ${SAM_PE1}; samtools view ${BAM_PE2_SORTED} > ${SAM_PE2}; java -jar -Xmx8g ${JAR_MAKEBEDPE} ${SAM_PE1} ${SAM_PE2} ${OUTPUT_BEDPE} ${METRICS_FILE}"
